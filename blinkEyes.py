@@ -3,8 +3,8 @@ import cv2
 
 # 찾고자하는 것의 cascade classifier 를 등록
 # 경로는 상대경로로 바뀔 수 있음
-faceCascade = cv2.CascadeClassifier('./haarcascade_frontalface_default.xml')
-eyeCascade = cv2.CascadeClassifier('./haarcascade_eye.xml')
+faceCascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+eyeCascade = cv2.CascadeClassifier('haarcascade_eye.xml')
 
 """ 
     def = haar를 이용 얼굴과 눈을 찾는 함수
