@@ -3,6 +3,7 @@ import dlib
 from math import hypot
 import time
 import datetime
+import pygame
 
 detector = dlib.get_frontal_face_detector()
 faceCascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
@@ -50,6 +51,7 @@ capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
 BLINK_CYCLE_SEC = 3
 
+pygame.mixer.init()
 last_time_blink = time.time()
 
 while True :
@@ -60,10 +62,11 @@ while True :
 
     faces = detector(gray)
 
-    user_blink_cycle = time.time() - last_time_blink
-    if (user_blink_cycle) >= BLINK_CYCLE_SEC:
+    if (time.time() - last_time_blink) >= BLINK_CYCLE_SEC:
         cv2.putText(image, "please blink", (50, 50), font, 2, (0, 255, 0))
+        blink_sound = pygame.mixer.Sound("please_blink.mp3")
         print("please blink")
+        blink_sound.play()
 
     for face in faces:
         landmarks = predictor(gray, face)
@@ -75,9 +78,8 @@ while True :
         blinking_ratio = (left_eye_ratio + right_eye_ratio) / 2
         if blinking_ratio >= 4.0:
             last_time_blink = time.time()
-            str_time = str(datetime.timedelta(seconds=user_blink_cycle)).split(".")
-            cv2.putText(image, "blinking"+str_time[0], (50, 50), font, 2, (255, 0, 0))
-            print("blinking", str_time[0])
+            cv2.putText(image, "blinking", (50, 50), font, 2, (255, 0, 0))
+            print("blinking")
 
     # show the frame
     cv2.imshow("Frame", image)
