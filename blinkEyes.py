@@ -1,6 +1,8 @@
 import cv2
 import dlib
 from math import hypot
+import time
+import datetime
 
 detector = dlib.get_frontal_face_detector()
 faceCascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
@@ -46,6 +48,8 @@ capture = cv2.VideoCapture(0)
 capture.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
+BLINCK_CYCLE_SEC = 3
+
 while True :
     _, image = capture.read()
 
@@ -53,6 +57,11 @@ while True :
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     faces = detector(gray)
+    last_time_blink = time.time()
+
+    if (time.time() - last_time_blink) >= BLINCK_CYCLE_SEC:
+        cv2.putText(image, "please blink", (50, 50), font, 2, (0, 255, 0))
+        print("please blink")
 
     for face in faces:
         landmarks = predictor(gray, face)
@@ -62,9 +71,10 @@ while True :
         right_eye_ratio = get_blinking_ratio(
             RIGHT_EYE_POINTS, landmarks)
         blinking_ratio = (left_eye_ratio + right_eye_ratio) / 2
-        if blinking_ratio >= 4.5:
+        if blinking_ratio >= 4.0:
+            last_time_blink = time.time()
             cv2.putText(image, "blinking", (50, 50), font, 2, (255, 0, 0))
-            print("blinking")
+            print("blinking %s", last_time_blink)
 
     # show the frame
     cv2.imshow("Frame", image)
