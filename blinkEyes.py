@@ -1,68 +1,75 @@
-import numpy as np
 import cv2
 import dlib
+from math import hypot
 
+detector = dlib.get_frontal_face_detector()
 faceCascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+font = cv2.FONT_HERSHEY_SIMPLEX
 
 # 얼굴의 각 구역의 포인트들을 구분해 놓기
 JAWLINE_POINTS = list(range(0, 17))
 RIGHT_EYEBROW_POINTS = list(range(17, 22))
 LEFT_EYEBROW_POINTS = list(range(22, 27))
 NOSE_POINTS = list(range(27, 36))
-RIGHT_EYE_POINTS = list(range(36, 42))
-LEFT_EYE_POINTS = list(range(42, 48))
+LEFT_EYE_POINTS = list(range(36, 42))
+RIGHT_EYE_POINTS = list(range(42, 48))
 MOUTH_OUTLINE_POINTS = list(range(48, 61))
 MOUTH_INNER_POINTS = list(range(61, 68))
 
-""" 
-    def = dlib를 이용 얼굴과 눈을 찾는 함수
-    input = 그레이 스케일 이미지
-    output = 얼굴 중요 68개의 포인트 에 그려진 점 + 이미지
-"""
+def midpoint(p1, p2):
+    return int((p1.x + p2.x)/2), int((p1.y + p2.y)/2)
 
+def get_blinking_ratio(eye_points, facial_landmarks):
+    left_point = (facial_landmarks.part(
+        eye_points[0]).x, facial_landmarks.part(eye_points[0]).y)
+    right_point = (facial_landmarks.part(
+        eye_points[3]).x, facial_landmarks.part(eye_points[3]).y)
+    center_top = midpoint(facial_landmarks.part(
+        eye_points[1]), facial_landmarks.part(eye_points[2]))
+    center_bottom = midpoint(facial_landmarks.part(
+        eye_points[5]), facial_landmarks.part(eye_points[4]))
 
-def detect(gray, frame):
-    # 일단, 등록한 Cascade classifier 를 이용 얼굴을 찾음
-    faces = faceCascade.detectMultiScale(gray, scaleFactor=1.05, minNeighbors=5, minSize=(100, 100),
-                                         flags=cv2.CASCADE_SCALE_IMAGE)
+    hor_line = cv2.line(image, left_point, right_point, (0, 255, 0), 2)
+    ver_line = cv2.line(image, center_top, center_bottom, (0, 255, 0), 2)
 
-    # 얼굴에서 랜드마크를 찾자
-    for (x, y, w, h) in faces:
-        # 오픈 CV 이미지를 dlib용 사각형으로 변환하고
-        dlib_rect = dlib.rectangle(int(x), int(y), int(x + w), int(y + h))
-        # 랜드마크 포인트들 지정
-        landmarks = np.matrix([[p.x, p.y] for p in predictor(frame, dlib_rect).parts()])
-        # 원하는 포인트들을 넣는다, 지금은 전부
-        # landmarks_display = landmarks[0:68]
-        # 눈만 =
-        landmarks_display = landmarks[RIGHT_EYE_POINTS, LEFT_EYE_POINTS]
+    hor_line_lenght = hypot(
+        (left_point[0] - right_point[0]), (left_point[1] - right_point[1]))
+    ver_line_lenght = hypot(
+        (center_top[0] - center_bottom[0]), (center_top[1] - center_bottom[1]))
 
-        # 포인트 출력
-        for idx, point in enumerate(landmarks_display):
-            pos = (point[0, 0], point[0, 1])
-            cv2.circle(frame, pos, 2, color=(0, 255, 255), thickness=-1)
+    ratio = hor_line_lenght / ver_line_lenght
+    return ratio
 
-    return frame
+# main
+capture = cv2.VideoCapture(0)
+capture.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
+while True :
+    _, image = capture.read()
 
-# 웹캠에서 이미지 가져오기
-video_capture = cv2.VideoCapture(0)
+    # convert frame to gray
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-while True:
-    # 웹캠 이미지를 프레임으로 자름
-    _, frame = video_capture.read()
-    # 그리고 이미지를 그레이스케일로 변환
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    faces = detector(gray)
 
-    # 만들어준 얼굴 눈 찾기
-    canvas = detect(gray, frame)
-    # 찾은 이미지 보여주기
-    cv2.imshow("haha", canvas)
+    for face in faces:
+        landmarks = predictor(gray, face)
 
-    # q를 누르면 종료
-    if cv2.waitKey(1) & 0xFF == ord('q'):
+        left_eye_ratio = get_blinking_ratio(
+            LEFT_EYE_POINTS, landmarks)
+        right_eye_ratio = get_blinking_ratio(
+            RIGHT_EYE_POINTS, landmarks)
+        blinking_ratio = (left_eye_ratio + right_eye_ratio) / 2
+        if blinking_ratio >= 6.0:
+            cv2.putText(image, "blinking", (50, 50), font, 2, (255, 0, 0))
+            print("blinking")
+
+    # show the frame
+    cv2.imshow("Frame", image)
+    key = cv2.waitKey(1) & 0xFF
+
+    # if the `q` key was pressed, break from the loop
+    if key == ord("q"):
         break
-# 끝
-video_capture.release()
-cv2.destroyAllWindows()
