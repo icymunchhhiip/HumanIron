@@ -74,8 +74,8 @@ while True :
         blinking_ratio = (left_eye_ratio + right_eye_ratio) / 2
         if blinking_ratio >= 4.0:
             last_time_blink = time.time()
-            cv2.putText(image, "blinking", (50, 50), font, 2, (255, 0, 0))
             str_time = str(datetime.timedelta(seconds=last_time_blink)).split(".")
+            cv2.putText(image, "blinking"+str_time[0], (50, 50), font, 2, (255, 0, 0))
             print("blinking", str_time[0])
 
     # show the frame
