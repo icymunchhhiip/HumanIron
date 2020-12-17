@@ -6,8 +6,14 @@ faceCascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
 
 # 얼굴의 각 구역의 포인트들을 구분해 놓기
+JAWLINE_POINTS = list(range(0, 17))
+RIGHT_EYEBROW_POINTS = list(range(17, 22))
+LEFT_EYEBROW_POINTS = list(range(22, 27))
+NOSE_POINTS = list(range(27, 36))
 RIGHT_EYE_POINTS = list(range(36, 42))
 LEFT_EYE_POINTS = list(range(42, 48))
+MOUTH_OUTLINE_POINTS = list(range(48, 61))
+MOUTH_INNER_POINTS = list(range(61, 68))
 
 """ 
     def = dlib를 이용 얼굴과 눈을 찾는 함수
@@ -27,9 +33,9 @@ def detect(gray, frame):
         dlib_rect = dlib.rectangle(int(x), int(y), int(x + w), int(y + h))
         # 랜드마크 포인트들 지정
         landmarks = np.matrix([[p.x, p.y] for p in predictor(frame, dlib_rect).parts()])
-        # 원하는 포인트들을 넣는다, 전부
+        # 원하는 포인트들을 넣는다, 지금은 전부
         # landmarks_display = landmarks[0:68]
-        # 눈만
+        # 눈만 =
         landmarks_display = landmarks[RIGHT_EYE_POINTS, LEFT_EYE_POINTS]
 
         # 포인트 출력
