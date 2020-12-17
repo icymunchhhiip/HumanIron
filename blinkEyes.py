@@ -48,7 +48,7 @@ capture = cv2.VideoCapture(0)
 capture.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
-BLINCK_CYCLE_SEC = 3
+BLINK_CYCLE_SEC = 3
 
 last_time_blink = time.time()
 
@@ -60,7 +60,8 @@ while True :
 
     faces = detector(gray)
 
-    if (time.time() - last_time_blink) >= BLINCK_CYCLE_SEC:
+    user_blink_cycle = time.time() - last_time_blink
+    if (user_blink_cycle) >= BLINK_CYCLE_SEC:
         cv2.putText(image, "please blink", (50, 50), font, 2, (0, 255, 0))
         print("please blink")
 
@@ -74,7 +75,7 @@ while True :
         blinking_ratio = (left_eye_ratio + right_eye_ratio) / 2
         if blinking_ratio >= 4.0:
             last_time_blink = time.time()
-            str_time = str(datetime.timedelta(seconds=last_time_blink)).split(".")
+            str_time = str(datetime.timedelta(seconds=user_blink_cycle)).split(".")
             cv2.putText(image, "blinking"+str_time[0], (50, 50), font, 2, (255, 0, 0))
             print("blinking", str_time[0])
 
