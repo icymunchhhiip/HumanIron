@@ -50,6 +50,8 @@ capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
 BLINCK_CYCLE_SEC = 3
 
+last_time_blink = time.time()
+
 while True :
     _, image = capture.read()
 
@@ -57,7 +59,6 @@ while True :
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     faces = detector(gray)
-    last_time_blink = time.time()
 
     if (time.time() - last_time_blink) >= BLINCK_CYCLE_SEC:
         cv2.putText(image, "please blink", (50, 50), font, 2, (0, 255, 0))
@@ -74,7 +75,7 @@ while True :
         if blinking_ratio >= 4.0:
             last_time_blink = time.time()
             cv2.putText(image, "blinking", (50, 50), font, 2, (255, 0, 0))
-            print("blinking %s", last_time_blink)
+            print("blinking {%s}", last_time_blink)
 
     # show the frame
     cv2.imshow("Frame", image)
