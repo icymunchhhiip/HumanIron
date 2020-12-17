@@ -1,37 +1,41 @@
 import numpy as np
 import cv2
+import dlib
 
-# 찾고자하는 것의 cascade classifier 를 등록
-# 경로는 상대경로로 바뀔 수 있음
 faceCascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
-eyeCascade = cv2.CascadeClassifier('haarcascade_eye.xml')
+predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+
+# 얼굴의 각 구역의 포인트들을 구분해 놓기
+RIGHT_EYE_POINTS = list(range(36, 42))
+LEFT_EYE_POINTS = list(range(42, 48))
 
 """ 
-    def = haar를 이용 얼굴과 눈을 찾는 함수
+    def = dlib를 이용 얼굴과 눈을 찾는 함수
     input = 그레이 스케일 이미지
-    output = 얼굴과 눈에 사각형이 그려진 이미지 프레임
+    output = 얼굴 중요 68개의 포인트 에 그려진 점 + 이미지
 """
 
+
 def detect(gray, frame):
-    # 등록한 Cascade classifier 를 이용 얼굴을 찾음
+    # 일단, 등록한 Cascade classifier 를 이용 얼굴을 찾음
     faces = faceCascade.detectMultiScale(gray, scaleFactor=1.05, minNeighbors=5, minSize=(100, 100),
                                          flags=cv2.CASCADE_SCALE_IMAGE)
 
-    # 얼굴에 사각형을 그리고 눈을 찾자
+    # 얼굴에서 랜드마크를 찾자
     for (x, y, w, h) in faces:
-        # 얼굴: 이미지 프레임에 (x,y)에서 시작, (x+넓이, y+길이)까지의 사각형을 그림(색 255 0 0 , 굵기 2)
-        cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+        # 오픈 CV 이미지를 dlib용 사각형으로 변환하고
+        dlib_rect = dlib.rectangle(int(x), int(y), int(x + w), int(y + h))
+        # 랜드마크 포인트들 지정
+        landmarks = np.matrix([[p.x, p.y] for p in predictor(frame, dlib_rect).parts()])
+        # 원하는 포인트들을 넣는다, 전부
+        # landmarks_display = landmarks[0:68]
+        # 눈만
+        landmarks_display = landmarks[RIGHT_EYE_POINTS, LEFT_EYE_POINTS]
 
-        # 이미지를 얼굴 크기 만큼 잘라서 그레이스케일 이미지와 컬러이미지를 만듬
-        face_gray = gray[y:y + h, x:x + w]
-        face_color = frame[y:y + h, x:x + w]
-
-        # 등록한 Cascade classifier 를 이용 눈을 찾음(얼굴 영역에서만)
-        eyes = eyeCascade.detectMultiScale(face_gray, 1.1, 3)
-
-        # 눈: 이미지 프레임에 (x,y)에서 시작, (x+넓이, y+길이)까지의 사각형을 그림(색 0 255 0 , 굵기 2)
-        for (ex, ey, ew, eh) in eyes:
-            cv2.rectangle(face_color, (ex, ey), (ex + ew, ey + eh), (0, 255, 0), 2)
+        # 포인트 출력
+        for idx, point in enumerate(landmarks_display):
+            pos = (point[0, 0], point[0, 1])
+            cv2.circle(frame, pos, 2, color=(0, 255, 255), thickness=-1)
 
     return frame
 
