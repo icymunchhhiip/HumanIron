@@ -49,11 +49,13 @@ capture = cv2.VideoCapture(0)
 capture.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
-BLINK_CYCLE_SEC = 3
+BLINK_CYCLE_SEC = 5
 
 pygame.mixer.init()
 last_time_blink = time.time()
 blink_sound = pygame.mixer.Sound("please_blink.wav")
+SOUND_LENTH = 2
+sound_time = SOUND_LENTH
 
 while True:
     _, image = capture.read()
@@ -78,7 +80,9 @@ while True:
         elif (time.time() - last_time_blink) >= BLINK_CYCLE_SEC:
             cv2.putText(image, "please blink", (50, 50), font, 2, (0, 255, 0))
             print("please blink")
-            blink_sound.play()
+            if (time.time() - sound_time) >= SOUND_LENTH:
+                sound_time = time.time()
+                blink_sound.play()
 
     # show the frame
     cv2.imshow("Frame", image)
