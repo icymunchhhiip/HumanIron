@@ -53,20 +53,15 @@ BLINK_CYCLE_SEC = 3
 
 pygame.mixer.init()
 last_time_blink = time.time()
+blink_sound = pygame.mixer.Sound("please_blink.wav")
 
-while True :
+while True:
     _, image = capture.read()
 
     # convert frame to gray
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     faces = detector(gray)
-
-    if (time.time() - last_time_blink) >= BLINK_CYCLE_SEC:
-        cv2.putText(image, "please blink", (50, 50), font, 2, (0, 255, 0))
-        blink_sound = pygame.mixer.Sound("please_blink.mp3")
-        print("please blink")
-        blink_sound.play()
 
     for face in faces:
         landmarks = predictor(gray, face)
@@ -80,6 +75,10 @@ while True :
             last_time_blink = time.time()
             cv2.putText(image, "blinking", (50, 50), font, 2, (255, 0, 0))
             print("blinking")
+        elif (time.time() - last_time_blink) >= BLINK_CYCLE_SEC:
+            cv2.putText(image, "please blink", (50, 50), font, 2, (0, 255, 0))
+            print("please blink")
+            blink_sound.play()
 
     # show the frame
     cv2.imshow("Frame", image)
