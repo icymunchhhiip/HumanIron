@@ -137,8 +137,9 @@ async def blinkmain():
 
     global camera
     camera = picamera.PiCamera()
+    camera.resolution = (640, 480)
     camera.framerate = 30
-    raw_capture = PiRGBArray(camera)
+    raw_capture = PiRGBArray(camera, size=(640, 480))
     stream = io.BytesIO()
     time.sleep(1)
     while True:
@@ -254,8 +255,8 @@ async def posemain():
 async def process_async():
     start = time.time()
     await asyncio.wait([
-        blinkmain()
-        # ,posemain()
+        blinkmain(),
+        posemain()
     ])
     end = time.time()
     print(f'>>> 비동기 처리 총 소요 시간: {end - start}')
