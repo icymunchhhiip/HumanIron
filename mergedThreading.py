@@ -245,6 +245,7 @@ async def posemain():
             break
 
 async def stretching():
+    print("start stretching")
     pygame.mixer.init()
     stretching_sound = pygame.mixer.Sound("real_adult.wav")
 
