@@ -177,7 +177,6 @@ async def blinkmain():
                 break
             stream.truncate()
             stream.seek(0)
-            camera.close()
             print("sleep blink")
             await asyncio.sleep(5)
             print("awake blink")
@@ -234,7 +233,6 @@ async def posemain():
                     await asyncio.sleep(
                         int(5) - (time.time() - start)
                     )
-                camera.close()
                 print("sleep pose")
                 await asyncio.sleep(30)
                 print("awake pose")
