@@ -244,6 +244,22 @@ async def posemain():
             quitm.play()
             break
 
+async def stretching():
+    pygame.mixer.init()
+    stretching_sound = pygame.mixer.Sound("real_adult.wav")
+
+    CYCLE_MIN = 20
+    REST_TIME_MIN = 5
+
+    cycle_seconds = CYCLE_MIN * 60
+    rest_seconds = REST_TIME_MIN * 60
+
+    while True:
+        await asyncio.sleep(cycle_seconds)
+        print("please stretching")
+        stretching_sound.play()
+        await asyncio.sleep(rest_seconds)
+
 async def process_async():
     start = time.time()
     await asyncio.wait([
