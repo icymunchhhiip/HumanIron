@@ -6,6 +6,7 @@ import datetime
 import pygame
 import asyncio
 from picamera.array import PiRGBArray
+import io
 
 import picamera
 import RPi.GPIO as GPIO
@@ -136,7 +137,7 @@ async def blinkmain():
         camera.resolution = (640, 480)
         camera.framerate = 30
         raw_capture = PiRGBArray(camera, size=(640, 480))
-
+        stream = io.BytesIO()
         time.sleep(1)
         for frame in camera.capture_continuous(raw_capture, format="bgr", use_video_port=True):
             # _, image = capture.read()
@@ -174,7 +175,8 @@ async def blinkmain():
             # if the `q` key was pressed, break from the loop
             if key == ord("q"):
                 break
-
+            stream.truncate()
+            stream.seek(0)
             print("sleep blink")
             await asyncio.sleep(5)
             print("awake blink")
