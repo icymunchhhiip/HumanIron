@@ -143,6 +143,7 @@ async def blinkmain():
     stream = io.BytesIO()
     time.sleep(1)
     while True:
+        camera = picamera.PiCamera()
         for frame in camera.capture_continuous(raw_capture, format="bgr", use_video_port=True):
             # _, image = capture.read()
 
