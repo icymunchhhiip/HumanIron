@@ -178,7 +178,7 @@ async def blinkmain():
             # if the `q` key was pressed, break from the loop
             if key == ord("q"):
                 break
-            camera.close
+            camera.close()
             print("sleep blink")
             await asyncio.sleep(5)
             print("awake blink")
