@@ -16,6 +16,11 @@ from matplotlib import pyplot as plt
 from matplotlib import image as mpimg
 from pycocotools.coco import COCO
 
+# pose
+APP_KEY = '61438e2034d5616b9ecaf5ab8ccf7bf7'
+session = requests.Session()
+session.headers.update({'Authorization': 'KakaoAK ' + APP_KEY})
+
 # blink
 def midpoint(p1, p2):
     return int((p1.x + p2.x)/2), int((p1.y + p2.y)/2)
@@ -41,7 +46,60 @@ def get_blinking_ratio(image, eye_points, facial_landmarks):
     ratio = hor_line_lenght / ver_line_lenght
     return ratio
 
+# pose
+def inference(filename):
+    with open(filename, 'rb') as f:
+        response = session.post('https://cv-api.kakaobrain.com/pose', files=[('file', f)])
+        return response.json()
+
+def visualori(filename, annotations, threshold=0.2):
+    for annotation in annotations:
+        keypoints = np.asarray(annotation['keypoints']).reshape(-1, 3)
+        low_confidence = keypoints[:, -1] < threshold
+        keypoints[low_confidence, :] = [0, 0, 0]
+        annotation['keypoints'] = keypoints.reshape(-1).tolist()
+
+    # COCO API를 활용한 시각화
+    plt.cla()
+    plt.clf()
+    plt.imshow(mpimg.imread(filename))
+    plt.axis('off')
+
+    coco = COCO()
+    coco.dataset = {}
+    coco.dataset = {
+        "categories": [
+            {
+                "supercategory": "person",
+                "id": 1,
+                "name": "person",
+                "keypoints": ["nose", "left_eye", "right_eye", "left_ear", "right_ear", "left_shoulder",
+                              "right_shoulder", "left_elbow", "right_elbow", "left_wrist", "right_wrist",
+                              "left_hip",
+                              "right_hip", "left_knee", "right_knee", "left_ankle", "right_ankle"],
+                "skeleton": [[1, 2], [1, 3], [2, 3], [2, 4], [3, 5], [4, 6], [5, 7], [6, 7], [6, 8], [6, 12],
+                             [7, 9],
+                             [7, 13], [8, 10], [9, 11], [12, 13], [14, 12], [15, 13], [16, 14], [17, 15]]
+            }
+        ]
+    }
+    coco.createIndex()
+    coco.showAnns(annotations)
+    plt.savefig('test.jpg')
+
+    img = cv2.imread('test.jpg', cv2.IMREAD_UNCHANGED)
+    cv2.waitKey(1)
+    return img
+
+def addpic(img, img2):
+    newimg = np.hstack((img, img2))
+    cv2.imshow('Result', newimg)
+    cv2.waitKey(5000)
+    cv2.destroyAllWindows()
+
+# main
 async def blinkmain():
+    print("start blinkmain")
     # blink
     detector = dlib.get_frontal_face_detector()
     faceCascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
@@ -107,73 +165,17 @@ async def blinkmain():
         await asyncio.sleep(5)
         print("awake blink")
 
-# pose
-pygame.mixer.init()
-bang = pygame.mixer.Sound("please_correct.wav")
-quitm = pygame.mixer.Sound("quit.wav")
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(17, GPIO.IN, GPIO.PUD_UP)
-
-APP_KEY = '61438e2034d5616b9ecaf5ab8ccf7bf7'
-
-session = requests.Session()
-session.headers.update({'Authorization': 'KakaoAK ' + APP_KEY})
-
-ORIGIN_PATH = '/home/pi/HumanIron/origin.jpg'
-NEW_PATH = '/home/pi/HumanIron/new.jpg'
-
-# pose
-def inference(filename):
-    with open(filename, 'rb') as f:
-        response = session.post('https://cv-api.kakaobrain.com/pose', files=[('file', f)])
-        return response.json()
-
-def visualori(filename, annotations, threshold=0.2):
-    for annotation in annotations:
-        keypoints = np.asarray(annotation['keypoints']).reshape(-1, 3)
-        low_confidence = keypoints[:, -1] < threshold
-        keypoints[low_confidence, :] = [0, 0, 0]
-        annotation['keypoints'] = keypoints.reshape(-1).tolist()
-
-    # COCO API를 활용한 시각화
-    plt.cla()
-    plt.clf()
-    plt.imshow(mpimg.imread(filename))
-    plt.axis('off')
-
-    coco = COCO()
-    coco.dataset = {}
-    coco.dataset = {
-        "categories": [
-            {
-                "supercategory": "person",
-                "id": 1,
-                "name": "person",
-                "keypoints": ["nose", "left_eye", "right_eye", "left_ear", "right_ear", "left_shoulder",
-                              "right_shoulder", "left_elbow", "right_elbow", "left_wrist", "right_wrist",
-                              "left_hip",
-                              "right_hip", "left_knee", "right_knee", "left_ankle", "right_ankle"],
-                "skeleton": [[1, 2], [1, 3], [2, 3], [2, 4], [3, 5], [4, 6], [5, 7], [6, 7], [6, 8], [6, 12],
-                             [7, 9],
-                             [7, 13], [8, 10], [9, 11], [12, 13], [14, 12], [15, 13], [16, 14], [17, 15]]
-            }
-        ]
-    }
-    coco.createIndex()
-    coco.showAnns(annotations)
-    plt.savefig('test.jpg')
-
-    img = cv2.imread('test.jpg', cv2.IMREAD_UNCHANGED)
-    cv2.waitKey(1)
-    return img
-
-def addpic(img, img2):
-    newimg = np.hstack((img, img2))
-    cv2.imshow('Result', newimg)
-    cv2.waitKey(5000)
-    cv2.destroyAllWindows()
-
 async def posemain():
+    print("start posmain")
+    # pose
+    pygame.mixer.init()
+    bang = pygame.mixer.Sound("please_correct.wav")
+    quitm = pygame.mixer.Sound("quit.wav")
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(17, GPIO.IN, GPIO.PUD_UP)
+
+    ORIGIN_PATH = '/home/pi/HumanIron/origin.jpg'
+    NEW_PATH = '/home/pi/HumanIron/new.jpg'
 
     with picamera.PiCamera() as camera:
         camera.start_preview()
