@@ -131,102 +131,96 @@ def addpic(img, img2):
 
 # main
 def blinkmain():
-    _, image = capture.read()
-
-    # convert frame to gray
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-    faces = detector(gray)
-
-    for face in faces:
-        landmarks = predictor(gray, face)
-
-        left_eye_ratio = get_blinking_ratio(
-            LEFT_EYE_POINTS, landmarks)
-        right_eye_ratio = get_blinking_ratio(
-            RIGHT_EYE_POINTS, landmarks)
-        blinking_ratio = (left_eye_ratio + right_eye_ratio) / 2
-        if blinking_ratio >= 4.3:
-            last_time_blink = time.time()
-            cv2.putText(image, "blinking", (50, 50), font, 2, (255, 0, 0))
-            print("blinking")
-        elif (time.time() - last_time_blink) >= BLINK_CYCLE_SEC:
-            cv2.putText(image, "please blink", (50, 50), font, 2, (0, 255, 0))
-            print("please blink")
-            if (time.time() - sound_time) >= SOUND_LENTH:
-                sound_time = time.time()
-                blink_sound.play()
-
-    # show the frame
-    cv2.imshow("Frame", image)
-    key = cv2.waitKey(1) & 0xFF
-
-    # if the `q` key was pressed, break from the loop
-    if key == ord("q"):
-        return
-
-def posemain(origin,img):
-    with picamera.PiCamera() as camera:
-        start = time.time()
-        camera.capture(NEW_PATH)
-        newimg = Image.open(NEW_PATH)
-        newimg.save(NEW_PATH, quality=86)
-        newdata = inference(NEW_PATH)
-        img2 = visualori(NEW_PATH, newdata)
-
-        try:
-            # 캡쳐 이미자
-            # 파일로 이미지 입력시
-            oleft_shoulder = origin[0]["keypoints"][6]
-            oright_shoulder = origin[0]["keypoints"][7]
-            onose = origin[0]["keypoints"][0]
-            # t분에 한번씩 이미지 저장
-            sleft_shoulder = newdata[0]["keypoints"][6]
-            sright_shoulder = newdata[0]["keypoints"][7]
-            snose = newdata[0]["keypoints"][0]
-
-            lsd = oleft_shoulder - sleft_shoulder
-            rsd = oright_shoulder - sright_shoulder
-            nd = onose - snose
-
-            if abs(lsd) > 30 or abs(rsd) > 30 or abs(nd) > 30:
-                print(" alarm")
-                bang.play()
-                addpic(img, img2)
-
-            else:
-                print(abs(lsd))
-                print(abs(rsd))
-                print(abs(nd))
-                camera.stop_preview()
-                time.sleep(
-                    int(5) - (time.time() - start)
-                )
-        except:
-            quitm.play()
-            return
-
-def th_proc(id_num):
     while True:
-        if id_num == 1:
-            blinkmain()
-        else:
-            with picamera.PiCamera() as camera:
-                camera.start_preview()
-                frame = 1
-                GPIO.wait_for_edge(17, GPIO.FALLING)
+        _, image = capture.read()
 
-                camera.capture(ORIGIN_PATH)
-                orgimg = Image.open(ORIGIN_PATH)
-                orgimg.save(ORIGIN_PATH, quality=86)
+        # convert frame to gray
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-                origin = inference(ORIGIN_PATH)
-                img = visualori(ORIGIN_PATH, origin)
-                posemain(origin,img)
+        faces = detector(gray)
 
+        for face in faces:
+            landmarks = predictor(gray, face)
 
-t1 = threading.Thread(target=th_proc(), args=1)
-t2 = threading.Thread(target=th_proc(), args=2)
+            left_eye_ratio = get_blinking_ratio(
+                LEFT_EYE_POINTS, landmarks)
+            right_eye_ratio = get_blinking_ratio(
+                RIGHT_EYE_POINTS, landmarks)
+            blinking_ratio = (left_eye_ratio + right_eye_ratio) / 2
+            if blinking_ratio >= 4.3:
+                last_time_blink = time.time()
+                cv2.putText(image, "blinking", (50, 50), font, 2, (255, 0, 0))
+                print("blinking")
+            elif (time.time() - last_time_blink) >= BLINK_CYCLE_SEC:
+                cv2.putText(image, "please blink", (50, 50), font, 2, (0, 255, 0))
+                print("please blink")
+                if (time.time() - sound_time) >= SOUND_LENTH:
+                    sound_time = time.time()
+                    blink_sound.play()
+
+        # show the frame
+        cv2.imshow("Frame", image)
+        key = cv2.waitKey(1) & 0xFF
+
+        # if the `q` key was pressed, break from the loop
+        if key == ord("q"):
+            break
+
+def posemain():
+    with picamera.PiCamera() as camera:
+        camera.start_preview()
+        frame = 1
+        GPIO.wait_for_edge(17, GPIO.FALLING)
+
+        camera.capture(ORIGIN_PATH)
+        orgimg = Image.open(ORIGIN_PATH)
+        orgimg.save(ORIGIN_PATH, quality=86)
+
+        origin = inference(ORIGIN_PATH)
+        img = visualori(ORIGIN_PATH, origin)
+
+        while True:
+            start = time.time()
+            camera.capture(NEW_PATH)
+            newimg = Image.open(NEW_PATH)
+            newimg.save(NEW_PATH, quality=86)
+            newdata = inference(NEW_PATH)
+            img2 = visualori(NEW_PATH, newdata)
+
+            try:
+                # 캡쳐 이미자
+                # 파일로 이미지 입력시
+                oleft_shoulder = origin[0]["keypoints"][6]
+                oright_shoulder = origin[0]["keypoints"][7]
+                onose = origin[0]["keypoints"][0]
+                # t분에 한번씩 이미지 저장
+                sleft_shoulder = newdata[0]["keypoints"][6]
+                sright_shoulder = newdata[0]["keypoints"][7]
+                snose = newdata[0]["keypoints"][0]
+
+                lsd = oleft_shoulder - sleft_shoulder
+                rsd = oright_shoulder - sright_shoulder
+                nd = onose - snose
+
+                if abs(lsd) > 30 or abs(rsd) > 30 or abs(nd) > 30:
+                    print(" alarm")
+                    bang.play()
+                    addpic(img, img2)
+
+                else:
+                    print(abs(lsd))
+                    print(abs(rsd))
+                    print(abs(nd))
+                    camera.stop_preview()
+                    time.sleep(
+                        int(5) - (time.time() - start)
+                    )
+            except:
+                quitm.play()
+                break
+
+t1 = threading.Thread(target=blinkmain)
+t2 = threading.Thread(target=posemain)
 
 t1.start()
 t2.start()
