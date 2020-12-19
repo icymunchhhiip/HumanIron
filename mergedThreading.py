@@ -140,10 +140,11 @@ async def blinkmain():
     camera.resolution = (640, 480)
     camera.framerate = 30
     raw_capture = PiRGBArray(camera, size=(640, 480))
-    time.sleep(1)
+    time.sleep(0.1)
     camera.close()
     while True:
         camera = picamera.PiCamera()
+        time.sleep(0.1)
         for frame in camera.capture_continuous(raw_capture, format="bgr", use_video_port=True):
             # _, image = capture.read()
 
@@ -173,18 +174,18 @@ async def blinkmain():
                         sound_time = time.time()
                         blink_sound.play()
 
-            # show the frame
-            cv2.imshow("Frame", image)
-            key = cv2.waitKey(1) & 0xFF
-            raw_capture.truncate(0)
-            # if the `q` key was pressed, break from the loop
-            if key == ord("q"):
-                break
-            camera.close
-            print("sleep blink")
-            await asyncio.sleep(5)
-            print("awake blink")
+        # show the frame
+        cv2.imshow("Frame", image)
+        key = cv2.waitKey(1) & 0xFF
+        raw_capture.truncate(0)
+        # if the `q` key was pressed, break from the loop
+        if key == ord("q"):
             break
+        camera.close
+        print("sleep blink")
+        await asyncio.sleep(5)
+        print("awake blink")
+        break
 
 async def posemain():
     print("start posmain")
