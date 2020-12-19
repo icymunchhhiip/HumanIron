@@ -134,9 +134,9 @@ async def blinkmain():
     last_time_blink = time.time()
 
     with picamera.PiCamera() as camera:
-        camera.resolution = (640, 480)
+        camera.resolution = (480, 320)
         camera.framerate = 30
-        raw_capture = PiRGBArray(camera, size=(640, 480))
+        raw_capture = PiRGBArray(camera, size=(480, 320))
         stream = io.BytesIO()
         time.sleep(1)
         for frame in camera.capture_continuous(raw_capture, format="bgr", use_video_port=True):
