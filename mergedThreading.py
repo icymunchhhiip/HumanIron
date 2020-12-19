@@ -17,47 +17,6 @@ from matplotlib import image as mpimg
 from pycocotools.coco import COCO
 
 # blink
-detector = dlib.get_frontal_face_detector()
-faceCascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
-predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
-font = cv2.FONT_HERSHEY_SIMPLEX
-
-JAWLINE_POINTS = list(range(0, 17))
-RIGHT_EYEBROW_POINTS = list(range(17, 22))
-LEFT_EYEBROW_POINTS = list(range(22, 27))
-NOSE_POINTS = list(range(27, 36))
-LEFT_EYE_POINTS = list(range(36, 42))
-RIGHT_EYE_POINTS = list(range(42, 48))
-MOUTH_OUTLINE_POINTS = list(range(48, 61))
-MOUTH_INNER_POINTS = list(range(61, 68))
-
-capture = cv2.VideoCapture(0)
-capture.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-
-BLINK_CYCLE_SEC = 5
-
-pygame.mixer.init()
-blink_sound = pygame.mixer.Sound("please_blink.wav")
-SOUND_LENTH = 2
-sound_time = SOUND_LENTH
-last_time_blink = time.time()
-
-# pose
-bang = pygame.mixer.Sound("please_correct.wav")
-quitm = pygame.mixer.Sound("quit.wav")
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(17, GPIO.IN, GPIO.PUD_UP)
-
-APP_KEY = '61438e2034d5616b9ecaf5ab8ccf7bf7'
-
-session = requests.Session()
-session.headers.update({'Authorization': 'KakaoAK ' + APP_KEY})
-
-ORIGIN_PATH = '/home/pi/HumanIron/origin.jpg'
-NEW_PATH = '/home/pi/HumanIron/new.jpg'
-
-# blink
 def midpoint(p1, p2):
     return int((p1.x + p2.x)/2), int((p1.y + p2.y)/2)
 
@@ -135,6 +94,33 @@ def addpic(img, img2):
 
 # main
 async def blinkmain():
+    # blink
+    detector = dlib.get_frontal_face_detector()
+    faceCascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+    predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+    font = cv2.FONT_HERSHEY_SIMPLEX
+
+    JAWLINE_POINTS = list(range(0, 17))
+    RIGHT_EYEBROW_POINTS = list(range(17, 22))
+    LEFT_EYEBROW_POINTS = list(range(22, 27))
+    NOSE_POINTS = list(range(27, 36))
+    LEFT_EYE_POINTS = list(range(36, 42))
+    RIGHT_EYE_POINTS = list(range(42, 48))
+    MOUTH_OUTLINE_POINTS = list(range(48, 61))
+    MOUTH_INNER_POINTS = list(range(61, 68))
+
+    capture = cv2.VideoCapture(0)
+    capture.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+
+    BLINK_CYCLE_SEC = 5
+
+    pygame.mixer.init()
+    blink_sound = pygame.mixer.Sound("please_blink.wav")
+    SOUND_LENTH = 2
+    sound_time = SOUND_LENTH
+    last_time_blink = time.time()
+
     while True:
         _, image = capture.read()
 
@@ -174,6 +160,21 @@ async def blinkmain():
         print("awake blink")
 
 async def posemain():
+    # pose
+    pygame.mixer.init()
+    bang = pygame.mixer.Sound("please_correct.wav")
+    quitm = pygame.mixer.Sound("quit.wav")
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(17, GPIO.IN, GPIO.PUD_UP)
+
+    APP_KEY = '61438e2034d5616b9ecaf5ab8ccf7bf7'
+
+    session = requests.Session()
+    session.headers.update({'Authorization': 'KakaoAK ' + APP_KEY})
+
+    ORIGIN_PATH = '/home/pi/HumanIron/origin.jpg'
+    NEW_PATH = '/home/pi/HumanIron/new.jpg'
+
     with picamera.PiCamera() as camera:
         camera.start_preview()
         frame = 1
