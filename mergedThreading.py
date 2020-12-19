@@ -138,7 +138,7 @@ async def blinkmain():
     global camera
     camera = picamera.PiCamera()
     camera.framerate = 30
-    raw_capture = PiRGBArray(camera, size=(480, 320))
+    raw_capture = PiRGBArray(camera)
     stream = io.BytesIO()
     time.sleep(1)
     while True:
