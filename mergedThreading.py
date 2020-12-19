@@ -156,9 +156,9 @@ async def blinkmain():
             for face in faces:
                 landmarks = predictor(gray, face)
 
-                left_eye_ratio = get_blinking_ratio(
+                left_eye_ratio = get_blinking_ratio(image,
                     LEFT_EYE_POINTS, landmarks)
-                right_eye_ratio = get_blinking_ratio(
+                right_eye_ratio = get_blinking_ratio(image,
                     RIGHT_EYE_POINTS, landmarks)
                 blinking_ratio = (left_eye_ratio + right_eye_ratio) / 2
                 if blinking_ratio >= 4.3:
