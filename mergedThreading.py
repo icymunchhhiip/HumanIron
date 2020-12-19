@@ -143,6 +143,7 @@ async def blinkmain():
     time.sleep(0.1)
     camera.close()
     while True:
+        global camera
         camera = picamera.PiCamera()
         camera.resolution = (640, 480)
         camera.framerate = 30
