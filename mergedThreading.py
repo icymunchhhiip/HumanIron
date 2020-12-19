@@ -126,6 +126,7 @@ async def blinkmain():
 
         # convert frame to gray
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        capture.close()
 
         faces = detector(gray)
 
@@ -190,6 +191,7 @@ async def posemain():
         while True:
             start = time.time()
             camera.capture(NEW_PATH)
+            camera.close()
             newimg = Image.open(NEW_PATH)
             newimg.save(NEW_PATH, quality=86)
             newdata = inference(NEW_PATH)
