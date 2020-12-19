@@ -135,13 +135,6 @@ async def blinkmain():
     sound_time = SOUND_LENTH
     last_time_blink = time.time()
 
-    global camera
-    camera = picamera.PiCamera()
-    camera.resolution = (640, 480)
-    camera.framerate = 30
-    raw_capture = PiRGBArray(camera, size=(640, 480))
-    time.sleep(0.1)
-    camera.close()
     while True:
         global camera
         camera = picamera.PiCamera()
