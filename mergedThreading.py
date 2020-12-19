@@ -188,7 +188,6 @@ async def posemain():
     print("start posmain")
 
     global camera
-    camera = picamera.PiCamera()
     camera.start_preview()
     frame = 1
     # GPIO.wait_for_edge(17, GPIO.FALLING)
@@ -200,7 +199,6 @@ async def posemain():
     origin = inference(ORIGIN_PATH)
     img = visualori(ORIGIN_PATH, origin)
 
-    camera.close()
 
     while True:
         start = time.time()
