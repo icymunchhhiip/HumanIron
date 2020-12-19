@@ -57,13 +57,11 @@ session.headers.update({'Authorization': 'KakaoAK ' + APP_KEY})
 ORIGIN_PATH = '/home/pi/HumanIron/origin.jpg'
 NEW_PATH = '/home/pi/HumanIron/new.jpg'
 
-global image
-
 # blink
 def midpoint(p1, p2):
     return int((p1.x + p2.x)/2), int((p1.y + p2.y)/2)
 
-def get_blinking_ratio(eye_points, facial_landmarks):
+def get_blinking_ratio(image, eye_points, facial_landmarks):
     left_point = (facial_landmarks.part(
         eye_points[0]).x, facial_landmarks.part(eye_points[0]).y)
     right_point = (facial_landmarks.part(
@@ -148,9 +146,9 @@ async def blinkmain():
         for face in faces:
             landmarks = predictor(gray, face)
 
-            left_eye_ratio = get_blinking_ratio(
+            left_eye_ratio = get_blinking_ratio(image,
                 LEFT_EYE_POINTS, landmarks)
-            right_eye_ratio = get_blinking_ratio(
+            right_eye_ratio = get_blinking_ratio(image,
                 RIGHT_EYE_POINTS, landmarks)
             blinking_ratio = (left_eye_ratio + right_eye_ratio) / 2
             if blinking_ratio >= 4.3:
