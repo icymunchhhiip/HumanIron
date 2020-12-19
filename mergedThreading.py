@@ -187,7 +187,7 @@ async def posemain():
     with picamera.PiCamera() as camera:
         camera.start_preview()
         frame = 1
-        GPIO.wait_for_edge(17, GPIO.FALLING)
+        # GPIO.wait_for_edge(17, GPIO.FALLING)
 
         camera.capture(ORIGIN_PATH)
         orgimg = Image.open(ORIGIN_PATH)
