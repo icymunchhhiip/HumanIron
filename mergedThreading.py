@@ -126,7 +126,6 @@ async def blinkmain():
 
         # convert frame to gray
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        capture.close()
 
         faces = detector(gray)
 
