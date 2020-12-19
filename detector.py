@@ -29,7 +29,6 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         roi_color = image[y:y + h, x:x + w]
         eyes = eyesCascade.detectMultiScale(roi_gray)
         for (ex, ey, ew, eh) in eyes:
-            print eyes
             cv2.rectangle(roi_color, (ex, ey), (ex + ew, ey + eh), (100, 255, 255), 2)
 
         if len(faces) >= 1 and len(eyes) >= 2:
