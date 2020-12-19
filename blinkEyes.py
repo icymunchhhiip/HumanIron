@@ -4,6 +4,8 @@ from math import hypot
 import time
 import datetime
 import pygame
+import picamera
+from picamera.array import PiRGBArray
 
 detector = dlib.get_frontal_face_detector()
 faceCascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
@@ -45,9 +47,8 @@ def get_blinking_ratio(eye_points, facial_landmarks):
     return ratio
 
 # main
-capture = cv2.VideoCapture(0)
-capture.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+# capture.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+# capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
 BLINK_CYCLE_SEC = 5
 
@@ -57,37 +58,46 @@ blink_sound = pygame.mixer.Sound("please_blink.wav")
 SOUND_LENTH = 2
 sound_time = SOUND_LENTH
 
-while True:
-    _, image = capture.read()
 
-    # convert frame to gray
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+with picamera.PiCamera() as camera:
+    camera.resolution = (640, 480)
+    camera.framerate = 30
+    raw_capture = PiRGBArray(camera, size=(640, 480))
 
-    faces = detector(gray)
+    time.sleep(1)
+    for frame in camera.capture_continuous(raw_capture, format="bgr", use_video_port=True):
+        # _, image = capture.read()
 
-    for face in faces:
-        landmarks = predictor(gray, face)
+        image = frame.array
 
-        left_eye_ratio = get_blinking_ratio(
-            LEFT_EYE_POINTS, landmarks)
-        right_eye_ratio = get_blinking_ratio(
-            RIGHT_EYE_POINTS, landmarks)
-        blinking_ratio = (left_eye_ratio + right_eye_ratio) / 2
-        if blinking_ratio >= 4.3:
-            last_time_blink = time.time()
-            cv2.putText(image, "blinking", (50, 50), font, 2, (255, 0, 0))
-            print("blinking")
-        elif (time.time() - last_time_blink) >= BLINK_CYCLE_SEC:
-            cv2.putText(image, "please blink", (50, 50), font, 2, (0, 255, 0))
-            print("please blink")
-            if (time.time() - sound_time) >= SOUND_LENTH:
-                sound_time = time.time()
-                blink_sound.play()
+        # convert frame to gray
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-    # show the frame
-    cv2.imshow("Frame", image)
-    key = cv2.waitKey(1) & 0xFF
+        faces = detector(gray)
 
-    # if the `q` key was pressed, break from the loop
-    if key == ord("q"):
-        break
+        for face in faces:
+            landmarks = predictor(gray, face)
+
+            left_eye_ratio = get_blinking_ratio(
+                LEFT_EYE_POINTS, landmarks)
+            right_eye_ratio = get_blinking_ratio(
+                RIGHT_EYE_POINTS, landmarks)
+            blinking_ratio = (left_eye_ratio + right_eye_ratio) / 2
+            if blinking_ratio >= 4.3:
+                last_time_blink = time.time()
+                cv2.putText(image, "blinking", (50, 50), font, 2, (255, 0, 0))
+                print("blinking")
+            elif (time.time() - last_time_blink) >= BLINK_CYCLE_SEC:
+                cv2.putText(image, "please blink", (50, 50), font, 2, (0, 255, 0))
+                print("please blink")
+                if (time.time() - sound_time) >= SOUND_LENTH:
+                    sound_time = time.time()
+                    blink_sound.play()
+
+        # show the frame
+        cv2.imshow("Frame", image)
+        key = cv2.waitKey(1) & 0xFF
+
+        # if the `q` key was pressed, break from the loop
+        if key == ord("q"):
+            break
