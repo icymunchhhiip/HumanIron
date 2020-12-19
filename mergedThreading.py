@@ -222,8 +222,8 @@ async def posemain():
 async def process_async():
     start = time.time()
     await asyncio.wait([
-        blinkmain(),
-        posemain()
+        blinkmain()
+        # posemain()
     ])
     end = time.time()
     print(f'>>> 비동기 처리 총 소요 시간: {end - start}')
