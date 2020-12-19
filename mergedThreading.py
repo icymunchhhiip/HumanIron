@@ -18,6 +18,8 @@ from matplotlib import pyplot as plt
 from matplotlib import image as mpimg
 from pycocotools.coco import COCO
 
+global camera
+
 # pose
 APP_KEY = '61438e2034d5616b9ecaf5ab8ccf7bf7'
 session = requests.Session()
@@ -133,58 +135,62 @@ async def blinkmain():
     sound_time = SOUND_LENTH
     last_time_blink = time.time()
 
+    global camera
     camera = picamera.PiCamera()
     camera.resolution = (480, 320)
     camera.framerate = 30
     raw_capture = PiRGBArray(camera, size=(480, 320))
     stream = io.BytesIO()
     time.sleep(1)
-    for frame in camera.capture_continuous(raw_capture, format="bgr", use_video_port=True):
-        # _, image = capture.read()
+    while True:
+        for frame in camera.capture_continuous(raw_capture, format="bgr", use_video_port=True):
+            # _, image = capture.read()
 
-        image = frame.array
+            image = frame.array
 
-        # convert frame to gray
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            # convert frame to gray
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-        faces = detector(gray)
+            faces = detector(gray)
 
-        for face in faces:
-            landmarks = predictor(gray, face)
+            for face in faces:
+                landmarks = predictor(gray, face)
 
-            left_eye_ratio = get_blinking_ratio(
-                LEFT_EYE_POINTS, landmarks)
-            right_eye_ratio = get_blinking_ratio(
-                RIGHT_EYE_POINTS, landmarks)
-            blinking_ratio = (left_eye_ratio + right_eye_ratio) / 2
-            if blinking_ratio >= 4.3:
-                last_time_blink = time.time()
-                cv2.putText(image, "blinking", (50, 50), font, 2, (255, 0, 0))
-                print("blinking")
-            elif (time.time() - last_time_blink) >= BLINK_CYCLE_SEC:
-                cv2.putText(image, "please blink", (50, 50), font, 2, (0, 255, 0))
-                print("please blink")
-                if (time.time() - sound_time) >= SOUND_LENTH:
-                    sound_time = time.time()
-                    blink_sound.play()
+                left_eye_ratio = get_blinking_ratio(
+                    LEFT_EYE_POINTS, landmarks)
+                right_eye_ratio = get_blinking_ratio(
+                    RIGHT_EYE_POINTS, landmarks)
+                blinking_ratio = (left_eye_ratio + right_eye_ratio) / 2
+                if blinking_ratio >= 4.3:
+                    last_time_blink = time.time()
+                    cv2.putText(image, "blinking", (50, 50), font, 2, (255, 0, 0))
+                    print("blinking")
+                elif (time.time() - last_time_blink) >= BLINK_CYCLE_SEC:
+                    cv2.putText(image, "please blink", (50, 50), font, 2, (0, 255, 0))
+                    print("please blink")
+                    if (time.time() - sound_time) >= SOUND_LENTH:
+                        sound_time = time.time()
+                        blink_sound.play()
 
-        # show the frame
-        cv2.imshow("Frame", image)
-        key = cv2.waitKey(1) & 0xFF
+            # show the frame
+            cv2.imshow("Frame", image)
+            key = cv2.waitKey(1) & 0xFF
 
-        # if the `q` key was pressed, break from the loop
-        if key == ord("q"):
+            # if the `q` key was pressed, break from the loop
+            if key == ord("q"):
+                break
+            stream.truncate()
+            stream.seek(0)
+            camera.close
+            print("sleep blink")
+            await asyncio.sleep(5)
+            print("awake blink")
             break
-        stream.truncate()
-        stream.seek(0)
-        camera.close
-        print("sleep blink")
-        await asyncio.sleep(5)
-        print("awake blink")
 
 async def posemain():
     print("start posmain")
 
+    global camera
     camera = picamera.PiCamera()
     camera.start_preview()
     frame = 1
@@ -238,7 +244,6 @@ async def posemain():
                     int(5) - (time.time() - start)
                 )
             print("sleep pose")
-            camera.close()
             await asyncio.sleep(30)
             print("awake pose")
         except:
