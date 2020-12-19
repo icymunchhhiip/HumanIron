@@ -129,7 +129,6 @@ def addpic(img, img2):
 
 ############################# main #############################
 
-last_time_blink = time.time()
 with picamera.PiCamera() as camera:
     camera.start_preview()
     frame = 1
@@ -142,7 +141,45 @@ with picamera.PiCamera() as camera:
     origin = inference(ORIGIN_PATH)
     img = visualori(ORIGIN_PATH, origin)
 
+    last_time_blink = time.time()
+
     while True:
+
+        _, image = capture.read()
+
+        # convert frame to gray
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+        faces = detector(gray)
+
+        for face in faces:
+            landmarks = predictor(gray, face)
+
+            left_eye_ratio = get_blinking_ratio(
+                LEFT_EYE_POINTS, landmarks)
+            right_eye_ratio = get_blinking_ratio(
+                RIGHT_EYE_POINTS, landmarks)
+            blinking_ratio = (left_eye_ratio + right_eye_ratio) / 2
+            if blinking_ratio >= 4.3:
+                last_time_blink = time.time()
+                cv2.putText(image, "blinking", (50, 50), font, 2, (255, 0, 0))
+                print("blinking")
+            elif (time.time() - last_time_blink) >= BLINK_CYCLE_SEC:
+                cv2.putText(image, "please blink", (50, 50), font, 2, (0, 255, 0))
+                print("please blink")
+                if (time.time() - sound_time) >= SOUND_LENTH:
+                    sound_time = time.time()
+                    blink_sound.play()
+
+        # show the frame
+        cv2.imshow("Frame", image)
+        key = cv2.waitKey(1) & 0xFF
+
+        # if the `q` key was pressed, break from the loop
+        if key == ord("q"):
+            break
+
+
         start = time.time()
         camera.capture(NEW_PATH)
         newimg = Image.open(NEW_PATH)
@@ -180,40 +217,6 @@ with picamera.PiCamera() as camera:
                 )
         except:
             quitm.play()
-            break
-
-        _, image = capture.read()
-
-        # convert frame to gray
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-        faces = detector(gray)
-
-        for face in faces:
-            landmarks = predictor(gray, face)
-
-            left_eye_ratio = get_blinking_ratio(
-                LEFT_EYE_POINTS, landmarks)
-            right_eye_ratio = get_blinking_ratio(
-                RIGHT_EYE_POINTS, landmarks)
-            blinking_ratio = (left_eye_ratio + right_eye_ratio) / 2
-            if blinking_ratio >= 4.3:
-                last_time_blink = time.time()
-                cv2.putText(image, "blinking", (50, 50), font, 2, (255, 0, 0))
-                print("blinking")
-            elif (time.time() - last_time_blink) >= BLINK_CYCLE_SEC:
-                cv2.putText(image, "please blink", (50, 50), font, 2, (0, 255, 0))
-                print("please blink")
-                if (time.time() - sound_time) >= SOUND_LENTH:
-                    sound_time = time.time()
-                    blink_sound.play()
-
-        # show the frame
-        cv2.imshow("Frame", image)
-        key = cv2.waitKey(1) & 0xFF
-
-        # if the `q` key was pressed, break from the loop
-        if key == ord("q"):
             break
 
 
