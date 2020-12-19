@@ -4,7 +4,7 @@ from math import hypot
 import time
 import datetime
 import pygame
-import threading
+import asyncio
 
 import picamera
 import RPi.GPIO as GPIO
@@ -130,7 +130,7 @@ def addpic(img, img2):
     cv2.destroyAllWindows()
 
 # main
-def blinkmain():
+async def blinkmain():
     while True:
         _, image = capture.read()
 
@@ -166,7 +166,7 @@ def blinkmain():
         if key == ord("q"):
             break
 
-def posemain():
+async def posemain():
     with picamera.PiCamera() as camera:
         camera.start_preview()
         frame = 1
@@ -212,15 +212,21 @@ def posemain():
                     print(abs(rsd))
                     print(abs(nd))
                     camera.stop_preview()
-                    time.sleep(
+                    await asyncio.sleep(
                         int(5) - (time.time() - start)
                     )
             except:
                 quitm.play()
                 break
 
-t1 = threading.Thread(target=blinkmain)
-t2 = threading.Thread(target=posemain)
+async def process_async():
+    start = time.time()
+    await asyncio.wait([
+        blinkmain(),
+        posemain()
+    ])
+    end = time.time()
+    print(f'>>> 비동기 처리 총 소요 시간: {end - start}')
 
-t1.start()
-t2.start()
+if __name__ == '__main__':
+    asyncio.run(process_async())
