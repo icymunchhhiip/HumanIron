@@ -19,6 +19,11 @@ from matplotlib import image as mpimg
 from pycocotools.coco import COCO
 
 global camera
+camera = picamera.PiCamera()
+camera.resolution = (640, 480)
+camera.framerate = 1
+raw_capture = PiRGBArray(camera, size=(640, 480))
+time.sleep(0.1)
 
 # pose
 APP_KEY = '61438e2034d5616b9ecaf5ab8ccf7bf7'
@@ -136,11 +141,6 @@ async def blinkmain():
     last_time_blink = time.time()
 
     global camera
-    camera = picamera.PiCamera()
-    camera.resolution = (640, 480)
-    camera.framerate = 1
-    raw_capture = PiRGBArray(camera, size=(640, 480))
-    time.sleep(0.1)
 
     while True:
         for frame in camera.capture_continuous(raw_capture, format="bgr", use_video_port=True):
@@ -179,7 +179,6 @@ async def blinkmain():
             # if the `q` key was pressed, break from the loop
             if key == ord("q"):
                 break
-            camera.close()
             print("sleep blink")
             await asyncio.sleep(5)
             print("awake blink")
@@ -204,7 +203,6 @@ async def posemain():
     camera.close()
 
     while True:
-        camera = picamera.PiCamera()
         start = time.time()
         camera.capture(NEW_PATH)
 
@@ -247,8 +245,6 @@ async def posemain():
         except:
             quitm.play()
             break
-        finally:
-            camera.close()
 
 async def process_async():
     start = time.time()
