@@ -175,7 +175,7 @@ async def blinkmain():
             # show the frame
             cv2.imshow("Frame", image)
             key = cv2.waitKey(1) & 0xFF
-
+            raw_capture.truncate(0)
             # if the `q` key was pressed, break from the loop
             if key == ord("q"):
                 break
