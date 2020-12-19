@@ -169,6 +169,9 @@ async def blinkmain():
         # if the `q` key was pressed, break from the loop
         if key == ord("q"):
             break
+        print("sleep blink")
+        await asyncio.sleep(5)
+        print("awake blink")
 
 async def posemain():
     with picamera.PiCamera() as camera:
@@ -219,6 +222,9 @@ async def posemain():
                     await asyncio.sleep(
                         int(5) - (time.time() - start)
                     )
+                print("sleep pose")
+                await asyncio.sleep(30)
+                print("awake pose")
             except:
                 quitm.play()
                 break
