@@ -7,6 +7,7 @@ import pygame
 import picamera
 from picamera.array import PiRGBArray
 
+pygame.mixer.init()
 detector = dlib.get_frontal_face_detector()
 faceCascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
@@ -52,7 +53,6 @@ def get_blinking_ratio(eye_points, facial_landmarks):
 
 BLINK_CYCLE_SEC = 5
 
-pygame.mixer.init()
 last_time_blink = time.time()
 blink_sound = pygame.mixer.Sound("please_blink.wav")
 SOUND_LENTH = 2
@@ -60,9 +60,9 @@ sound_time = SOUND_LENTH
 
 
 with picamera.PiCamera() as camera:
-    camera.resolution = (640, 480)
+    camera.resolution = (480, 320)
     camera.framerate = 30
-    raw_capture = PiRGBArray(camera, size=(640, 480))
+    raw_capture = PiRGBArray(camera, size=(480, 320))
 
     time.sleep(1)
     for frame in camera.capture_continuous(raw_capture, format="bgr", use_video_port=True):
