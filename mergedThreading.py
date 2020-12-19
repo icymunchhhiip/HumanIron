@@ -20,6 +20,14 @@ from pycocotools.coco import COCO
 APP_KEY = '61438e2034d5616b9ecaf5ab8ccf7bf7'
 session = requests.Session()
 session.headers.update({'Authorization': 'KakaoAK ' + APP_KEY})
+pygame.mixer.init()
+bang = pygame.mixer.Sound("please_correct.wav")
+quitm = pygame.mixer.Sound("quit.wav")
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(17, GPIO.IN, GPIO.PUD_UP)
+
+ORIGIN_PATH = '/home/pi/HumanIron/origin.jpg'
+NEW_PATH = '/home/pi/HumanIron/new.jpg'
 
 # blink
 def midpoint(p1, p2):
@@ -167,15 +175,6 @@ async def blinkmain():
 
 async def posemain():
     print("start posmain")
-    # pose
-    pygame.mixer.init()
-    bang = pygame.mixer.Sound("please_correct.wav")
-    quitm = pygame.mixer.Sound("quit.wav")
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(17, GPIO.IN, GPIO.PUD_UP)
-
-    ORIGIN_PATH = '/home/pi/HumanIron/origin.jpg'
-    NEW_PATH = '/home/pi/HumanIron/new.jpg'
 
     with picamera.PiCamera() as camera:
         camera.start_preview()
