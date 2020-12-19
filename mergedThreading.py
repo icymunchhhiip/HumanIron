@@ -167,46 +167,44 @@ def blinkmain():
 
 def posemain(origin,img):
     with picamera.PiCamera() as camera:
+        start = time.time()
+        camera.capture(NEW_PATH)
+        newimg = Image.open(NEW_PATH)
+        newimg.save(NEW_PATH, quality=86)
+        newdata = inference(NEW_PATH)
+        img2 = visualori(NEW_PATH, newdata)
 
-        while True:
-            start = time.time()
-            camera.capture(NEW_PATH)
-            newimg = Image.open(NEW_PATH)
-            newimg.save(NEW_PATH, quality=86)
-            newdata = inference(NEW_PATH)
-            img2 = visualori(NEW_PATH, newdata)
+        try:
+            # 캡쳐 이미자
+            # 파일로 이미지 입력시
+            oleft_shoulder = origin[0]["keypoints"][6]
+            oright_shoulder = origin[0]["keypoints"][7]
+            onose = origin[0]["keypoints"][0]
+            # t분에 한번씩 이미지 저장
+            sleft_shoulder = newdata[0]["keypoints"][6]
+            sright_shoulder = newdata[0]["keypoints"][7]
+            snose = newdata[0]["keypoints"][0]
 
-            try:
-                # 캡쳐 이미자
-                # 파일로 이미지 입력시
-                oleft_shoulder = origin[0]["keypoints"][6]
-                oright_shoulder = origin[0]["keypoints"][7]
-                onose = origin[0]["keypoints"][0]
-                # t분에 한번씩 이미지 저장
-                sleft_shoulder = newdata[0]["keypoints"][6]
-                sright_shoulder = newdata[0]["keypoints"][7]
-                snose = newdata[0]["keypoints"][0]
+            lsd = oleft_shoulder - sleft_shoulder
+            rsd = oright_shoulder - sright_shoulder
+            nd = onose - snose
 
-                lsd = oleft_shoulder - sleft_shoulder
-                rsd = oright_shoulder - sright_shoulder
-                nd = onose - snose
+            if abs(lsd) > 30 or abs(rsd) > 30 or abs(nd) > 30:
+                print(" alarm")
+                bang.play()
+                addpic(img, img2)
 
-                if abs(lsd) > 30 or abs(rsd) > 30 or abs(nd) > 30:
-                    print(" alarm")
-                    bang.play()
-                    addpic(img, img2)
-
-                else:
-                    print(abs(lsd))
-                    print(abs(rsd))
-                    print(abs(nd))
-                    camera.stop_preview()
-                    time.sleep(
-                        int(5) - (time.time() - start)
-                    )
-            except:
-                quitm.play()
-                break
+            else:
+                print(abs(lsd))
+                print(abs(rsd))
+                print(abs(nd))
+                camera.stop_preview()
+                time.sleep(
+                    int(5) - (time.time() - start)
+                )
+        except:
+            quitm.play()
+            return
 
 def th_proc(id_num):
     while True:
