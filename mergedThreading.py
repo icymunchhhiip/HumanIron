@@ -134,6 +134,7 @@ async def blinkmain():
     last_time_blink = time.time()
 
     with picamera.PiCamera() as camera:
+        camera = picamera.PiCamera()
         camera.resolution = (480, 320)
         camera.framerate = 30
         raw_capture = PiRGBArray(camera, size=(480, 320))
@@ -177,6 +178,7 @@ async def blinkmain():
                 break
             stream.truncate()
             stream.seek(0)
+            camera.close
             print("sleep blink")
             await asyncio.sleep(5)
             print("awake blink")
@@ -185,6 +187,7 @@ async def posemain():
     print("start posmain")
 
     with picamera.PiCamera() as camera:
+        camera = picamera.PiCamera()
         camera.start_preview()
         frame = 1
         # GPIO.wait_for_edge(17, GPIO.FALLING)
@@ -234,11 +237,14 @@ async def posemain():
                         int(5) - (time.time() - start)
                     )
                 print("sleep pose")
+                camera.close()
                 await asyncio.sleep(30)
                 print("awake pose")
             except:
                 quitm.play()
                 break
+            finally:
+                camera.close()
 
 async def process_async():
     start = time.time()
