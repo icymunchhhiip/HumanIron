@@ -133,118 +133,119 @@ async def blinkmain():
     sound_time = SOUND_LENTH
     last_time_blink = time.time()
 
-    with picamera.PiCamera() as camera:
-        camera = picamera.PiCamera()
-        camera.resolution = (480, 320)
-        camera.framerate = 30
-        raw_capture = PiRGBArray(camera, size=(480, 320))
-        stream = io.BytesIO()
-        time.sleep(1)
-        for frame in camera.capture_continuous(raw_capture, format="bgr", use_video_port=True):
-            # _, image = capture.read()
+    camera = picamera.PiCamera()
+    camera.resolution = (480, 320)
+    camera.framerate = 30
+    raw_capture = PiRGBArray(camera, size=(480, 320))
+    stream = io.BytesIO()
+    time.sleep(1)
+    for frame in camera.capture_continuous(raw_capture, format="bgr", use_video_port=True):
+        # _, image = capture.read()
 
-            image = frame.array
+        image = frame.array
 
-            # convert frame to gray
-            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        # convert frame to gray
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-            faces = detector(gray)
+        faces = detector(gray)
 
-            for face in faces:
-                landmarks = predictor(gray, face)
+        for face in faces:
+            landmarks = predictor(gray, face)
 
-                left_eye_ratio = get_blinking_ratio(
-                    LEFT_EYE_POINTS, landmarks)
-                right_eye_ratio = get_blinking_ratio(
-                    RIGHT_EYE_POINTS, landmarks)
-                blinking_ratio = (left_eye_ratio + right_eye_ratio) / 2
-                if blinking_ratio >= 4.3:
-                    last_time_blink = time.time()
-                    cv2.putText(image, "blinking", (50, 50), font, 2, (255, 0, 0))
-                    print("blinking")
-                elif (time.time() - last_time_blink) >= BLINK_CYCLE_SEC:
-                    cv2.putText(image, "please blink", (50, 50), font, 2, (0, 255, 0))
-                    print("please blink")
-                    if (time.time() - sound_time) >= SOUND_LENTH:
-                        sound_time = time.time()
-                        blink_sound.play()
+            left_eye_ratio = get_blinking_ratio(
+                LEFT_EYE_POINTS, landmarks)
+            right_eye_ratio = get_blinking_ratio(
+                RIGHT_EYE_POINTS, landmarks)
+            blinking_ratio = (left_eye_ratio + right_eye_ratio) / 2
+            if blinking_ratio >= 4.3:
+                last_time_blink = time.time()
+                cv2.putText(image, "blinking", (50, 50), font, 2, (255, 0, 0))
+                print("blinking")
+            elif (time.time() - last_time_blink) >= BLINK_CYCLE_SEC:
+                cv2.putText(image, "please blink", (50, 50), font, 2, (0, 255, 0))
+                print("please blink")
+                if (time.time() - sound_time) >= SOUND_LENTH:
+                    sound_time = time.time()
+                    blink_sound.play()
 
-            # show the frame
-            cv2.imshow("Frame", image)
-            key = cv2.waitKey(1) & 0xFF
+        # show the frame
+        cv2.imshow("Frame", image)
+        key = cv2.waitKey(1) & 0xFF
 
-            # if the `q` key was pressed, break from the loop
-            if key == ord("q"):
-                break
-            stream.truncate()
-            stream.seek(0)
-            camera.close
-            print("sleep blink")
-            await asyncio.sleep(5)
-            print("awake blink")
+        # if the `q` key was pressed, break from the loop
+        if key == ord("q"):
+            break
+        stream.truncate()
+        stream.seek(0)
+        camera.close
+        print("sleep blink")
+        await asyncio.sleep(5)
+        print("awake blink")
 
 async def posemain():
     print("start posmain")
 
-    with picamera.PiCamera() as camera:
+    camera = picamera.PiCamera()
+    camera.start_preview()
+    frame = 1
+    # GPIO.wait_for_edge(17, GPIO.FALLING)
+
+    camera.capture(ORIGIN_PATH)
+    orgimg = Image.open(ORIGIN_PATH)
+    orgimg.save(ORIGIN_PATH, quality=86)
+
+    origin = inference(ORIGIN_PATH)
+    img = visualori(ORIGIN_PATH, origin)
+
+    camera.close()
+
+    while True:
         camera = picamera.PiCamera()
-        camera.start_preview()
-        frame = 1
-        # GPIO.wait_for_edge(17, GPIO.FALLING)
+        start = time.time()
+        camera.capture(NEW_PATH)
 
-        camera.capture(ORIGIN_PATH)
-        orgimg = Image.open(ORIGIN_PATH)
-        orgimg.save(ORIGIN_PATH, quality=86)
+        newimg = Image.open(NEW_PATH)
+        newimg.save(NEW_PATH, quality=86)
+        newdata = inference(NEW_PATH)
+        img2 = visualori(NEW_PATH, newdata)
 
-        origin = inference(ORIGIN_PATH)
-        img = visualori(ORIGIN_PATH, origin)
+        try:
+            # 캡쳐 이미자
+            # 파일로 이미지 입력시
+            oleft_shoulder = origin[0]["keypoints"][6]
+            oright_shoulder = origin[0]["keypoints"][7]
+            onose = origin[0]["keypoints"][0]
+            # t분에 한번씩 이미지 저장
+            sleft_shoulder = newdata[0]["keypoints"][6]
+            sright_shoulder = newdata[0]["keypoints"][7]
+            snose = newdata[0]["keypoints"][0]
 
-        while True:
-            start = time.time()
-            camera.capture(NEW_PATH)
+            lsd = oleft_shoulder - sleft_shoulder
+            rsd = oright_shoulder - sright_shoulder
+            nd = onose - snose
 
-            newimg = Image.open(NEW_PATH)
-            newimg.save(NEW_PATH, quality=86)
-            newdata = inference(NEW_PATH)
-            img2 = visualori(NEW_PATH, newdata)
+            if abs(lsd) > 30 or abs(rsd) > 30 or abs(nd) > 30:
+                print(" alarm")
+                bang.play()
+                addpic(img, img2)
 
-            try:
-                # 캡쳐 이미자
-                # 파일로 이미지 입력시
-                oleft_shoulder = origin[0]["keypoints"][6]
-                oright_shoulder = origin[0]["keypoints"][7]
-                onose = origin[0]["keypoints"][0]
-                # t분에 한번씩 이미지 저장
-                sleft_shoulder = newdata[0]["keypoints"][6]
-                sright_shoulder = newdata[0]["keypoints"][7]
-                snose = newdata[0]["keypoints"][0]
-
-                lsd = oleft_shoulder - sleft_shoulder
-                rsd = oright_shoulder - sright_shoulder
-                nd = onose - snose
-
-                if abs(lsd) > 30 or abs(rsd) > 30 or abs(nd) > 30:
-                    print(" alarm")
-                    bang.play()
-                    addpic(img, img2)
-
-                else:
-                    print(abs(lsd))
-                    print(abs(rsd))
-                    print(abs(nd))
-                    camera.stop_preview()
-                    await asyncio.sleep(
-                        int(5) - (time.time() - start)
-                    )
-                print("sleep pose")
-                camera.close()
-                await asyncio.sleep(30)
-                print("awake pose")
-            except:
-                quitm.play()
-                break
-            finally:
-                camera.close()
+            else:
+                print(abs(lsd))
+                print(abs(rsd))
+                print(abs(nd))
+                camera.stop_preview()
+                await asyncio.sleep(
+                    int(5) - (time.time() - start)
+                )
+            print("sleep pose")
+            camera.close()
+            await asyncio.sleep(30)
+            print("awake pose")
+        except:
+            quitm.play()
+            break
+        finally:
+            camera.close()
 
 async def process_async():
     start = time.time()
