@@ -26,7 +26,7 @@ raw_capture = PiRGBArray(camera, size=(640, 480))
 time.sleep(0.1)
 
 # pose
-APP_KEY = '61438e2034d5616b9ecaf5ab8ccf7bf7'
+APP_KEY = '{app_key}'
 session = requests.Session()
 session.headers.update({'Authorization': 'KakaoAK ' + APP_KEY})
 pygame.mixer.init()
